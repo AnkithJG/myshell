@@ -1,20 +1,45 @@
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
+#include <sys/wait.h>
 
 int main(void) {
-    char name[100];
+    char command[100];
 
     while(1) {
-        printf("Enter your name (or type 'exit' to quit): ");
-        fgets(name, sizeof(name), stdin);
+        printf(">> ");
+        fgets(command, sizeof(command), stdin);
 
-        name[strcspn(name, "\n")] = 0;
+        command[strcspn(command, "\n")] = 0;
 
-        if (strcmp(name, "exit") == 0) {
+        if (strcmp(command, "exit") == 0) {
             break;
         }
+        else{
+            pid_t pid = fork();
 
-        printf("Hello, %s!\n", name);
+            if (pid < 0) {
+                perror("fork failed");
+                return 1;
+            }
+            else if (pid == 0) {
+                char *split = strtok(command, " ");
+                char *array[100];
+                int i = 0;
+                while (split != NULL) {
+                    array[i++] = split;
+                    split = strtok(NULL, " ");
+                }
+                array[i] = NULL;
+                execvp(array[0], array);
+                perror("execvp failed");
+                return 1;
+            }
+            else {
+                wait(NULL);
+            }
+        }
+
     }
 
 
